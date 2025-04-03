@@ -130,13 +130,10 @@ def sign_challenge(challenge):
     """
     acct = get_account()
     
-    # 确保使用正确的消息编码方式
     message = encode_defunct(text=challenge)
     
-    # 使用账户签名消息
     signed_message = acct.sign_message(message)
     
-    # 返回地址和签名（十六进制格式）
     return acct.address, signed_message.signature.hex()
 
 
