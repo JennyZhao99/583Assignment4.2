@@ -27,7 +27,7 @@ def merkle_assignment():
     tree = build_merkle(leaves)
 
     # Select a random leaf and create a proof for that leaf
-    random_leaf_index = random.randint(1, len(primes) - 1)  # 避开索引0
+    random_leaf_index = random.randint(1, len(primes) - 1)  
     proof = prove_merkle(tree, random_leaf_index)
 
     # This is the same way the grader generates a challenge for sign_challenge()
@@ -179,7 +179,7 @@ def send_signed_msg(proof, random_leaf):
     elif hasattr(signed_tx, 'rawTransaction'):
         tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
     
-    # 5. 等待交易确认
+    # wait for transaction confirmation
     try:
         receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
         if receipt.status == 1:
@@ -189,15 +189,10 @@ def send_signed_msg(proof, random_leaf):
         
         return tx_hash.hex()
     except Exception as e:
-        print(f"等待交易确认时出错: {e}")
-        # 即使等待确认失败，仍返回交易哈希
+        print(f"transaction confirmation failed: {e}")
         if hasattr(tx_hash, 'hex'):
             return tx_hash.hex()
         return str(tx_hash)
-
-
-
-
 
 
 # Helper functions that do not need to be modified
