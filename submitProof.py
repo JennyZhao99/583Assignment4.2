@@ -160,22 +160,39 @@ def send_signed_msg(proof, random_leaf):
     # 1. 创建合约实例
     contract = w3.eth.contract(address=address, abi=abi)
     
-    # 2. 构建交易
-    tx = contract.functions.submit(proof, random_leaf).buildTransaction({
+    # 2. 构建交易数据
+    function_data = contract.functions.submit(proof, random_leaf).buildTransaction({
         'chainId': 97,  # BSC测试网chain ID
-        'gas': 200000,  # 设置足够的gas limit
-        'gasPrice': w3.toWei('10', 'gwei'),  # 合理的gas价格
+        'gas': 200000,
+        'gasPrice': w3.toWei('10', 'gwei'),
         'nonce': w3.eth.getTransactionCount(acct.address),
-    })
+    })['data']
     
-    # 3. 签名交易
-    signed_tx = w3.eth.account.signTransaction(tx, private_key=acct.key)
+    # 3. 构建完整交易
+    transaction = {
+        'to': address,
+        'gas': 200000,
+        'gasPrice': w3.toWei('10', 'gwei'),
+        'nonce': w3.eth.getTransactionCount(acct.address),
+        'data': function_data,
+        'chainId': 97
+    }
     
-    # 4. 发送交易
+    # 4. 签名交易
+    signed_tx = w3.eth.account.signTransaction(transaction, acct.key)
+    
+    # 5. 发送交易
     tx_hash = w3.eth.sendRawTransaction(signed_tx.rawTransaction)
     
-    # 5. 返回交易哈希
+    # 6. 等待交易确认（可选）
+    receipt = w3.eth.waitForTransactionReceipt(tx_hash)
+    if receipt.status == 1:
+        print(f"Transaction successful! Hash: {tx_hash.hex()}")
+    else:
+        print("Transaction failed!")
+    
     return tx_hash.hex()
+
 
 
 
