@@ -5,6 +5,8 @@ import json
 from pathlib import Path
 from web3 import Web3
 from web3.middleware import ExtraDataToPOAMiddleware  # Necessary for POA chains
+from eth_account.messages import encode_defunct  # 添加这行导入
+
 
 
 def merkle_assignment():
@@ -129,12 +131,20 @@ def sign_challenge(challenge):
         claimed a prime
     """
     acct = get_account()
-    
+
+    addr = acct.address
+    eth_sk = acct.key
+
+    # TODO YOUR CODE HERE    
+    # 1. 编码消息为以太坊可签名的格式
     message = encode_defunct(text=challenge)
     
-    signed_message = acct.sign_message(message)
+    # 2. 使用私钥签名消息
+    signed_message = eth_account.Account.sign_message(message, private_key=eth_sk)
     
-    return acct.address, signed_message.signature.hex()
+    # 3. 返回地址和十六进制格式的签名
+    return addr, signed_message.signature.hex()
+
 
 
 def send_signed_msg(proof, random_leaf):
