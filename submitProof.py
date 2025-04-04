@@ -167,19 +167,20 @@ def send_signed_msg(proof, random_leaf):
         'nonce': nonce,
     })
     
-    # 3. 签名交易 - 兼容多种Web3.py版本
-    # 首先尝试使用Web3.py v6+的方式
+    # signature - try different Web3.py version
+    # Web3.py v6+
     signed_tx = w3.eth.account.sign_transaction(tx, acct.key)
     
-    # 4. 发送交易 - 兼容多种Web3.py版本
+    # send transaction - try different Web3.py version
     try:
-        # 尝试Web3.py v6+的方式 ('raw_transaction')
+        # Web3.py v6+ version ('raw_transaction')
         if hasattr(signed_tx, 'raw_transaction'):
             tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
-        # 尝试Web3.py v5及以下的方式 ('rawTransaction')
+        # Web3.py v5- version ('rawTransaction')
         elif hasattr(signed_tx, 'rawTransaction'):
             tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
         # 如果以上都不行，尝试解析为字典
+        """
         else:
             # 转换为字典并寻找合适的属性
             tx_dict = vars(signed_tx) if hasattr(signed_tx, '__dict__') else signed_tx
@@ -193,6 +194,7 @@ def send_signed_msg(proof, random_leaf):
                 print(f"签名交易对象的属性: {dir(signed_tx)}")
                 print(f"签名交易对象: {signed_tx}")
                 raise ValueError("无法找到交易的原始数据。请检查Web3.py版本兼容性。")
+        """
     
     except Exception as e:
         print(f"发送交易时出错: {e}")
