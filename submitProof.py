@@ -157,33 +157,102 @@ def send_signed_msg(proof, random_leaf):
     w3 = connect_to(chain)
 
     # TODO YOUR CODE HERE
+
+def send_signed_msg(proof, random_leaf):
+    """
+        Takes a Merkle proof of a leaf, and that leaf (in bytes32 format)
+        builds signs and sends a transaction claiming that leaf (prime)
+        on the contract
+    """
+    chain = 'bsc'
+
+    acct = get_account()
+    address, abi = get_contract_info(chain)
+    w3 = connect_to(chain)
+
     # 1. 创建合约实例
     contract = w3.eth.contract(address=address, abi=abi)
     
     # 2. 构建交易
     nonce = w3.eth.get_transaction_count(acct.address)
     
+    # 增加gas limit和gas price来确保交易成功
     tx = contract.functions.submit(proof, random_leaf).build_transaction({
         'chainId': 97,  # BSC测试网chain ID
-        'gas': 200000,
-        'gasPrice': w3.to_wei('10', 'gwei'),
+        'gas': 500000,  # 增加gas limit
+        'gasPrice': w3.to_wei('50', 'gwei'),  # 增加gas price
         'nonce': nonce,
     })
     
-    # 3. 签名交易 - 使用 w3.eth.account.sign_transaction 而不是 acct.sign_transaction
+    # 3. 签名交易 - 兼容多种Web3.py版本
+    # 首先尝试使用Web3.py v6+的方式
     signed_tx = w3.eth.account.sign_transaction(tx, acct.key)
     
-    # 4. 发送交易
-    tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+    # 4. 发送交易 - 兼容多种Web3.py版本
+    try:
+        # 尝试Web3.py v6+的方式 ('raw_transaction')
+        if hasattr(signed_tx, 'raw_transaction'):
+            tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+        # 尝试Web3.py v5及以下的方式 ('rawTransaction')
+        elif hasattr(signed_tx, 'rawTransaction'):
+            tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+        # 如果以上都不行，尝试解析为字典
+        else:
+            # 转换为字典并寻找合适的属性
+            tx_dict = vars(signed_tx) if hasattr(signed_tx, '__dict__') else signed_tx
+            
+            if 'rawTransaction' in tx_dict:
+                tx_hash = w3.eth.send_raw_transaction(tx_dict['rawTransaction'])
+            elif 'raw_transaction' in tx_dict:
+                tx_hash = w3.eth.send_raw_transaction(tx_dict['raw_transaction'])
+            else:
+                # 最后的尝试：直接打印签名交易对象并报错
+                print(f"签名交易对象的属性: {dir(signed_tx)}")
+                print(f"签名交易对象: {signed_tx}")
+                raise ValueError("无法找到交易的原始数据。请检查Web3.py版本兼容性。")
+    
+    except Exception as e:
+        print(f"发送交易时出错: {e}")
+        # 尝试使用另一种方法
+        try:
+            # 直接使用eth_account库的方式
+            from eth_account import Account
+            import eth_account
+            
+            # 重新签名
+            signed_tx2 = Account.sign_transaction(tx, acct.key)
+            
+            # 打印签名对象信息进行调试
+            print(f"Alternate签名对象类型: {type(signed_tx2)}")
+            print(f"Alternate签名对象属性: {dir(signed_tx2)}")
+            
+            # 尝试所有可能的属性名
+            if hasattr(signed_tx2, 'rawTransaction'):
+                tx_hash = w3.eth.send_raw_transaction(signed_tx2.rawTransaction)
+            elif hasattr(signed_tx2, 'raw_transaction'):
+                tx_hash = w3.eth.send_raw_transaction(signed_tx2.raw_transaction)
+            else:
+                raise ValueError("仍然无法找到交易的原始数据")
+                
+        except Exception as e2:
+            print(f"第二次尝试也失败: {e2}")
+            return '0x'  # 返回空哈希表示失败
     
     # 5. 等待交易确认
-    receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-    if receipt.status == 1:
-        print(f"Transaction successful! Hash: {tx_hash.hex()}")
-    else:
-        print("Transaction failed!")
-    
-    return tx_hash.hex()
+    try:
+        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+        if receipt.status == 1:
+            print(f"Transaction successful! Hash: {tx_hash.hex()}")
+        else:
+            print("Transaction failed!")
+        
+        return tx_hash.hex()
+    except Exception as e:
+        print(f"等待交易确认时出错: {e}")
+        # 即使等待确认失败，仍返回交易哈希
+        if hasattr(tx_hash, 'hex'):
+            return tx_hash.hex()
+        return str(tx_hash)
 
 
 
