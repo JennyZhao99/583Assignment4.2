@@ -157,18 +157,13 @@ def send_signed_msg(proof, random_leaf):
     w3 = connect_to(chain)
 
     # TODO YOUR CODE HERE
-
-    # 1. 创建合约实例
     contract = w3.eth.contract(address=address, abi=abi)
-    
-    # 2. 构建交易
     nonce = w3.eth.get_transaction_count(acct.address)
     
-    # 增加gas limit和gas price来确保交易成功
     tx = contract.functions.submit(proof, random_leaf).build_transaction({
-        'chainId': 97,  # BSC测试网chain ID
-        'gas': 500000,  # 增加gas limit
-        'gasPrice': w3.to_wei('50', 'gwei'),  # 增加gas price
+        'chainId': 97,  # BSC chain ID
+        'gas': 200000, 
+        'gasPrice': w3.to_wei('20', 'gwei'), 
         'nonce': nonce,
     })
     
