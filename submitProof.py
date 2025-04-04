@@ -136,13 +136,10 @@ def sign_challenge(challenge):
     eth_sk = acct.key
 
     # TODO YOUR CODE HERE    
-    # 1. 编码消息为以太坊可签名的格式
     message = encode_defunct(text=challenge)
     
-    # 2. 使用私钥签名消息
     signed_message = eth_account.Account.sign_message(message, private_key=eth_sk)
     
-    # 3. 返回地址和十六进制格式的签名
     return addr, signed_message.signature.hex()
 
 
@@ -154,22 +151,30 @@ def send_signed_msg(proof, random_leaf):
         on the contract
     """
     chain = 'bsc'
+
     acct = get_account()
-    contract_address, contract_abi = get_contract_info(chain)
+    address, abi = get_contract_info(chain)
     w3 = connect_to(chain)
+
+    # TODO YOUR CODE HERE
+    # 1. 创建合约实例
+    contract = w3.eth.contract(address=address, abi=abi)
     
-    contract = w3.eth.contract(address=contract_address, abi=contract_abi)
-    
-    tx = contract.functions.submit(random_leaf, proof).buildTransaction({
-        'chainId': 97,  # BSC testnet chain ID
-        'gas': 200000,
-        'gasPrice': w3.toWei('10', 'gwei'),
+    # 2. 构建交易
+    tx = contract.functions.submit(proof, random_leaf).buildTransaction({
+        'chainId': 97,  # BSC测试网chain ID
+        'gas': 200000,  # 设置足够的gas limit
+        'gasPrice': w3.toWei('10', 'gwei'),  # 合理的gas价格
         'nonce': w3.eth.getTransactionCount(acct.address),
     })
     
-    signed_tx = w3.eth.account.signTransaction(tx, acct.key)
+    # 3. 签名交易
+    signed_tx = w3.eth.account.signTransaction(tx, private_key=acct.key)
+    
+    # 4. 发送交易
     tx_hash = w3.eth.sendRawTransaction(signed_tx.rawTransaction)
     
+    # 5. 返回交易哈希
     return tx_hash.hex()
 
 
