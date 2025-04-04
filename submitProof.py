@@ -158,18 +158,6 @@ def send_signed_msg(proof, random_leaf):
 
     # TODO YOUR CODE HERE
 
-def send_signed_msg(proof, random_leaf):
-    """
-        Takes a Merkle proof of a leaf, and that leaf (in bytes32 format)
-        builds signs and sends a transaction claiming that leaf (prime)
-        on the contract
-    """
-    chain = 'bsc'
-
-    acct = get_account()
-    address, abi = get_contract_info(chain)
-    w3 = connect_to(chain)
-
     # 1. 创建合约实例
     contract = w3.eth.contract(address=address, abi=abi)
     
