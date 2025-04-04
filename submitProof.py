@@ -164,19 +164,19 @@ def send_signed_msg(proof, random_leaf):
     nonce = w3.eth.get_transaction_count(acct.address)
     
     tx = contract.functions.submit(proof, random_leaf).build_transaction({
-        'chainId': 97,  
+        'chainId': 97,  # BSC测试网chain ID
         'gas': 200000,
         'gasPrice': w3.to_wei('10', 'gwei'),
         'nonce': nonce,
     })
     
-    # 3. 签名交易
-    signed_tx = acct.sign_transaction(tx)
+    # 3. 签名交易 - 使用 w3.eth.account.sign_transaction 而不是 acct.sign_transaction
+    signed_tx = w3.eth.account.sign_transaction(tx, acct.key)
     
     # 4. 发送交易
     tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
     
-    # 5. 等待交易确认（可选）
+    # 5. 等待交易确认
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
     if receipt.status == 1:
         print(f"Transaction successful! Hash: {tx_hash.hex()}")
@@ -184,6 +184,7 @@ def send_signed_msg(proof, random_leaf):
         print("Transaction failed!")
     
     return tx_hash.hex()
+
 
 
 
