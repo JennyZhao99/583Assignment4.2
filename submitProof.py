@@ -172,56 +172,12 @@ def send_signed_msg(proof, random_leaf):
     signed_tx = w3.eth.account.sign_transaction(tx, acct.key)
     
     # send transaction - try different Web3.py version
-    try:
-        # Web3.py v6+ version ('raw_transaction')
-        if hasattr(signed_tx, 'raw_transaction'):
-            tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
-        # Web3.py v5- version ('rawTransaction')
-        elif hasattr(signed_tx, 'rawTransaction'):
-            tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
-        # 如果以上都不行，尝试解析为字典
-        """
-        else:
-            # 转换为字典并寻找合适的属性
-            tx_dict = vars(signed_tx) if hasattr(signed_tx, '__dict__') else signed_tx
-            
-            if 'rawTransaction' in tx_dict:
-                tx_hash = w3.eth.send_raw_transaction(tx_dict['rawTransaction'])
-            elif 'raw_transaction' in tx_dict:
-                tx_hash = w3.eth.send_raw_transaction(tx_dict['raw_transaction'])
-            else:
-                # 最后的尝试：直接打印签名交易对象并报错
-                print(f"签名交易对象的属性: {dir(signed_tx)}")
-                print(f"签名交易对象: {signed_tx}")
-                raise ValueError("无法找到交易的原始数据。请检查Web3.py版本兼容性。")
-        """
-    
-    except Exception as e:
-        print(f"发送交易时出错: {e}")
-        # 尝试使用另一种方法
-        try:
-            # 直接使用eth_account库的方式
-            from eth_account import Account
-            import eth_account
-            
-            # 重新签名
-            signed_tx2 = Account.sign_transaction(tx, acct.key)
-            
-            # 打印签名对象信息进行调试
-            print(f"Alternate签名对象类型: {type(signed_tx2)}")
-            print(f"Alternate签名对象属性: {dir(signed_tx2)}")
-            
-            # 尝试所有可能的属性名
-            if hasattr(signed_tx2, 'rawTransaction'):
-                tx_hash = w3.eth.send_raw_transaction(signed_tx2.rawTransaction)
-            elif hasattr(signed_tx2, 'raw_transaction'):
-                tx_hash = w3.eth.send_raw_transaction(signed_tx2.raw_transaction)
-            else:
-                raise ValueError("仍然无法找到交易的原始数据")
-                
-        except Exception as e2:
-            print(f"第二次尝试也失败: {e2}")
-            return '0x'  # 返回空哈希表示失败
+    # Web3.py v6+ version ('raw_transaction')
+    if hasattr(signed_tx, 'raw_transaction'):
+        tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+    # Web3.py v5- version ('rawTransaction')
+    elif hasattr(signed_tx, 'rawTransaction'):
+        tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
     
     # 5. 等待交易确认
     try:
